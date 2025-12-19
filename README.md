@@ -5,7 +5,7 @@ Adds multiplayer functionality.
 Builds for the emscripten target only.
 
 
-Server: https://github.com/ynoproject/ynoserver
+Server: https://github.com/Collective-Unconscious/minnaserver
 
 ## Documentation
 
@@ -99,8 +99,8 @@ make install
 4) Build ynoclient
 ```
 cd ~/workdir
-git clone https://github.com/ynoproject/ynoclient
-cd ynoclient
+git clone https://github.com/Collective-Unconscious/minnaengine.git
+cd minnaengine
 ./cmake_build.sh
 cd build
 ninja
@@ -164,3 +164,4 @@ EasyRPG Player makes use of the following 3rd party software:
 [ttyp0]: https://people.mpi-inf.mpg.de/~uwe/misc/uw-ttyp0
 [WenQuanYi]: http://wenq.org
 [Teenyicons]: https://github.com/teenyicons/teenyicons
+
