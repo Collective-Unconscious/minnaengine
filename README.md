@@ -51,4 +51,4 @@ simply builds the source files. if there is an error thrown here it is because o
 runs the local host in ./build. to play the game now, you can manually type the http address of the html file into your browser. clicking the .html directly wont work.
 
 
-written by @fluxide, happy coding
+happy coding
