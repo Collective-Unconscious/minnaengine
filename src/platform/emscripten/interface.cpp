@@ -43,17 +43,35 @@ void Emscripten_Interface::Reset() {
 }
 
 bool Emscripten_Interface::DownloadSavegame(int slot) {
+
 	auto fs = FileFinder::Save();
-	std::string name = Scene_Save::GetSaveFilename(fs, slot);
-	auto is = fs.OpenInputStream(name);
-	if (!is) {
+	auto name = Scene_Save::GetSaveFilename(fs, slot, true);
+	auto name2 = Scene_Save::GetSaveFilename(fs, slot);
+	auto is = fs.OpenInputStream(name2.first);
+	auto is2 = fs.OpenInputStream(name.first);
+
+	if (!is && !is2) {
 		return false;
 	}
-	auto save_buffer = Utils::ReadStream(is);
-	std::string filename = std::get<1>(FileFinder::GetPathAndFilename(name));
+
+	std::pair<std::vector<uint8_t>, std::vector<uint8_t>> save_buffers;
+
+	if(is) save_buffers.first = Utils::ReadStream(is);
+	if(is2&&name.second) save_buffers.second = Utils::ReadStream(is2);
+
+	std::string filename = std::get<1>(FileFinder::GetPathAndFilename(name.first));
+	std::string filename2 = std::get<1>(FileFinder::GetPathAndFilename(name2.first));
+
+	if(!save_buffers.first.empty())
 	EM_ASM_ARGS({
 		Module.api_private.download_js($0, $1, $2);
-	}, save_buffer.data(), save_buffer.size(), filename.c_str());
+	}, save_buffers.first.data(), save_buffers.first.size(), filename2.c_str());
+
+	if ((!save_buffers.second.empty()) && ESD_SUPPORT)
+	EM_ASM_ARGS({
+		Module.api_private.download_js($0, $1, $2);
+	}, save_buffers.second.data(), save_buffers.second.size(), filename.c_str());
+
 	return true;
 }
 
@@ -97,23 +115,61 @@ void Emscripten_Interface::TakeScreenshot(bool is_auto_screenshot) {
 
 bool Emscripten_Interface_Private::UploadSavegameStep2(int slot, int buffer_addr, int size) {
 	auto fs = FileFinder::Save();
-	std::string name = Scene_Save::GetSaveFilename(fs, slot);
 
-	std::istream is(new Filesystem_Stream::InputMemoryStreamBufView(lcf::Span<uint8_t>(reinterpret_cast<uint8_t*>(buffer_addr), size)));
+	auto name = Scene_Save::GetSaveFilename(fs, slot, true);
+	auto name2 = Scene_Save::GetSaveFilename(fs, slot);
 
-	if (!lcf::LSD_Reader::Load(is)) {
-		Output::Warning("Selected file is not a valid savegame");
-		return false;
-	}
+	auto ib = std::make_shared<std::vector<uint8_t>>(
+		reinterpret_cast<uint8_t*>(buffer_addr),
+		reinterpret_cast<uint8_t*>(buffer_addr) + size
+	);
 
-	{
-		auto os = fs.OpenOutputStream(name);
-		if (!os)
+
+	std::istream is(new Filesystem_Stream::InputMemoryStreamBufView(lcf::Span<uint8_t>(ib->data(), ib->size())));
+
+	char buf[4];
+	memset(buf, '\0', 4);
+
+	is.seekg(1, std::ios::beg);
+	is.read(buf, 3);
+	std::string input(buf);
+	is.clear();
+	is.seekg(0, std::ios::beg);
+
+	auto ft = [](std::string in) {
+		if (in == "Lcf") {
+			return 1;
+		}
+		else if (in == "?xm" && ESD_SUPPORT) {
+			return 2;
+		}
+		else return 0;
+		};
+
+	std::unique_ptr<lcf::rpg::Save> fi;
+
+	if (ft(input) == 1) fi = lcf::LSD_Reader::Load(is);
+	else if (ft(input) == 2) {
+		if (!ESD_SUPPORT)
 			return false;
-		os.write(reinterpret_cast<char*>(buffer_addr), size);
+		else
+			fi = lcf::LSD_Reader::LoadXml(is);
 	}
+
+	else return false;
+
+	auto os = ft(input)==2 ? fs.OpenOutputStream(name.first): fs.OpenOutputStream(name2.first);
+	if (!os)
+		return false;
+
+	auto lcf_engine = Player::IsRPG2k3() ? lcf::EngineVersion::e2k3 : lcf::EngineVersion::e2k;
+
+	if(ft(input)==2) lcf::LSD_Reader::SaveXml(os,*fi,lcf_engine);
+	else lcf::LSD_Reader::Save(os, *fi, lcf_engine);
 
 	AsyncHandler::SaveFilesystem();
+
+	os.Close();
 
 	return true;
 }

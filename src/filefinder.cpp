@@ -123,7 +123,7 @@ FilesystemView FileFinder::Save() {
 		return redir;
 	}
 
-	return game_fs;
+	return  game_fs;
 }
 
 void FileFinder::SetSaveFilesystem(FilesystemView filesystem) {

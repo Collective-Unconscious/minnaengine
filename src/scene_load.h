@@ -33,7 +33,7 @@ public:
 	 */
 	Scene_Load();
 
-	void Action(int index) override;
+	void Action(int index, ActionType act) override;
 	bool IsSlotValid(int index) override;
 };
 

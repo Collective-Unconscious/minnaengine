@@ -44,7 +44,7 @@ Module.initApi = function() {
   }
 
   Module.api_private.uploadSavegame_js = function (slot) {
-    Module.api_private.createInputElement_js('easyrpg_saveFile', '.lsd', function (file) {
+    Module.api_private.createInputElement_js('easyrpg_saveFile', '.lsd, .esd', function (file) {
       const result = new Uint8Array(file.currentTarget.result);
       var buf = Module._malloc(result.length);
       Module.HEAPU8.set(result, buf);

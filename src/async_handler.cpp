@@ -190,7 +190,7 @@ void AsyncHandler::CreateRequestMapping(const std::string& file) {
 				if (second.is_object()) {
 					parse(second, dirname);
 				} else if (second.is_string()){
-					file_mapping[FileFinder::MakePath(Utils::LowerCase(dirname), value.key())] = FileFinder::MakePath(dirname, second.get<std::string>());
+					file_mapping[FileFinder::MakePath(dirname, value.key())] = FileFinder::MakePath(dirname, second.get<std::string>());
 				}
 			}
 		};
@@ -351,9 +351,23 @@ void FileRequestAsync::Start() {
 	}
 
 	std::string modified_path;
+
+	//Normalize paths
 	if (index_version >= 2) {
-		modified_path = lcf::ReaderUtil::Normalize(path);
+
+		modified_path = path;
+
+		if (path.find("./") < 10 && path.find("./") > -1) {
+			modified_path = "";
+			char mppi[2000] = {};
+			for (int mpi = path.find("./") + 2;mpi < path.length();mpi++) {
+				mppi[mpi - 2] = path[mpi];
+			}
+			modified_path = std::string(mppi);
+		}
+
 		modified_path = FileFinder::MakeCanonical(modified_path, 1);
+
 	} else {
 		modified_path = Utils::LowerCase(path);
 		if (directory != ".") {
@@ -366,6 +380,9 @@ void FileRequestAsync::Start() {
 		}
 	}
 
+	emscripten_log(EM_LOG_CONSOLE, (std::string("LOOKUP:") + modified_path).c_str());
+
+
 	if (graphic && Tr::HasActiveTranslation()) {
 		std::string modified_path_trans = FileFinder::MakePath(lcf::ReaderUtil::Normalize(Tr::GetCurrentTranslationFilesystem().GetFullPath()), modified_path);
 		auto it = file_mapping.find(modified_path_trans);
@@ -373,6 +390,7 @@ void FileRequestAsync::Start() {
 			modified_path = modified_path_trans;
 		}
 	}
+
 
 	auto it = file_mapping.find(modified_path);
 	if (it != file_mapping.end()) {
@@ -384,6 +402,7 @@ void FileRequestAsync::Start() {
 		} else {
 			// Fire immediately (error)
 			Output::Debug("{} not in index.json", modified_path);
+			emscripten_log(EM_LOG_CONSOLE, (modified_path + std::string(" was not found")).c_str());
 			DownloadDone(false);
 			return;
 		}

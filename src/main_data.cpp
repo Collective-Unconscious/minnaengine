@@ -80,6 +80,7 @@ namespace Main_Data {
 	std::unique_ptr<Game_Variables> game_variables_global;
 
 	std::unique_ptr<FileFinder_RTP> filefinder_rtp;
+	bool inited=false;
 }
 
 void Main_Data::Init() {
@@ -93,6 +94,7 @@ void Main_Data::Init() {
 		if (project_path.empty()) {
 			// Set to current directory
 			project_path = "";
+			inited = true;
 
 #if defined(PLAYER_AMIGA)
 			// Working directory not correctly handled
@@ -116,6 +118,7 @@ void Main_Data::Init() {
 }
 
 void Main_Data::Cleanup() {
+	Main_Data::inited = false;
 	Game_Map::Quit();
 
 	game_switches.reset();
@@ -135,6 +138,11 @@ void Main_Data::Cleanup() {
 	global_save_opened = false;
 	game_switches_global.reset();
 	game_variables_global.reset();
+}
+
+bool Main_Data::IsInit()
+{
+	return inited;
 }
 
 const std::string& Main_Data::GetDefaultProjectPath() {

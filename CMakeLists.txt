@@ -635,10 +635,14 @@ elseif(PLAYER_TARGET_PLATFORM STREQUAL "SDL2")
 
 	# SDL2 depends on some systems on SDL2::SDL2main but SDL2::SDL2 is not always a dependency of it
 	# Manually add the dependencies
-	player_find_package(NAME SDL2
-		VERSION 2.0.14
-		TARGET SDL2::SDL2
+
+	# config mode is needed for emscripten stuff 
+	find_package(SDL2
+		CONFIG
 		REQUIRED)
+	
+	#this is here because SDL2::SDL2 is necessary 
+	target_link_libraries(${PROJECT_NAME} SDL2::SDL2)
 
 	if(TARGET SDL2::SDL2main)
 		target_link_libraries(${PROJECT_NAME} SDL2::SDL2main)
@@ -931,7 +935,7 @@ option(PLAYER_BUILD_LIBLCF "Instead of detecting liblcf, clone liblcf into lib/l
 set(PLAYER_BUILD_LIBLCF_GIT "https://github.com/EasyRPG/liblcf.git" CACHE STRING "Git repository of liblcf to clone. Requires PLAYER_BUILD_LIBLCF=ON.")
 set(PLAYER_BUILD_LIBLCF_BRANCH "master" CACHE STRING "Branch of the liblcf repository to clone. Requires PLAYER_BUILD_LIBLCF=ON.")
 
-if(PLAYER_BUILD_LIBLCF)
+if(OFF) #just build your own liblcf please
 	# liblcf is built as part of this cmake file
 	set(LIBLCF_PATH "${CMAKE_CURRENT_SOURCE_DIR}/lib/liblcf")
 	if(NOT EXISTS ${LIBLCF_PATH})
@@ -953,15 +957,18 @@ if(PLAYER_BUILD_LIBLCF)
 	target_link_libraries(${PROJECT_NAME} lcf)
 else()
 	# Use system package
-	player_find_package(NAME liblcf VERSION 0.8.1
-		TARGET liblcf::liblcf
+	# config mode also required for liblcf
+	find_package(liblcf 0.8.1
+		CONFIG
 		REQUIRED)
+	target_link_libraries(${PROJECT_NAME} liblcf::liblcf)
+
 endif()
 
 # Detect all required libraries
 # PNG pulls in zlib which has a broken config when not both static and shared library are installed
 player_find_package(NAME PNG TARGET PNG::PNG REQUIRED CONFIG_BROKEN)
-player_find_package(NAME fmt TARGET fmt::fmt VERSION 5.2 REQUIRED)
+find_package(fmt 5.2 CONFIG REQUIRED)
 
 # Do not use player_find_package. enable_language used by pixman on Android does not work properly inside function calls
 find_package(Pixman REQUIRED)
@@ -1245,14 +1252,18 @@ if(PLAYER_BUILD_EXECUTABLE AND ${PLAYER_TARGET_PLATFORM} MATCHES "^SDL.*$" AND N
 	if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
 		# Do not confuse this with our own -DUSE_SDL
 		# Prevent Emscripten from pulling in bundled SDL headers that break the build
-		target_compile_options(${PROJECT_NAME} PUBLIC "-sUSE_SDL=0")
+		
+		# ^^ no, actually the bundled sdl works better
+		# target_compile_options(${PROJECT_NAME} PUBLIC "-sUSE_SDL=0")
 
 		set(PLAYER_JS_PREJS "${CMAKE_CURRENT_SOURCE_DIR}/resources/emscripten/emscripten-pre.js")
 		set(PLAYER_JS_POSTJS "${CMAKE_CURRENT_SOURCE_DIR}/resources/emscripten/emscripten-post.js")
 		set(PLAYER_JS_SHELL "${CMAKE_CURRENT_SOURCE_DIR}/resources/emscripten/emscripten-shell.html")
 
+		#-sEXPORT_NAME=createEasyRpgPlayer | this is here until i figure it out, ems doesnt like it when the exe has a name i guess??
+
 		set_property(TARGET ${EXE_NAME} PROPERTY LINK_FLAGS
-			"-sALLOW_MEMORY_GROWTH -sMINIFY_HTML=0 -sMODULARIZE -sEXPORT_NAME=createEasyRpgPlayer \
+			"-sALLOW_MEMORY_GROWTH -sMINIFY_HTML=0 \
 			 -sEXIT_RUNTIME --bind --pre-js ${PLAYER_JS_PREJS} --post-js ${PLAYER_JS_POSTJS} \
 			 -sDEFAULT_LIBRARY_FUNCS_TO_INCLUDE=['$autoResumeAudioContext','$dynCall'] \
 			 -sEXPORTED_FUNCTIONS=_main,_malloc,_free")
@@ -1266,6 +1277,16 @@ if(PLAYER_BUILD_EXECUTABLE AND ${PLAYER_TARGET_PLATFORM} MATCHES "^SDL.*$" AND N
 
 		target_compile_options(${PROJECT_NAME} PUBLIC -fno-exceptions)
 
+		#again, using bundled sdl2
+  		set_property(TARGET ${PROJECT_NAME} APPEND PROPERTY
+    		COMPILE_OPTIONS -sUSE_SDL=2
+  		)
+
+  		target_link_options(EasyRPG_Player PRIVATE
+   			"-sUSE_SDL=2"
+  			)
+
+
 		target_sources(${PROJECT_NAME} PRIVATE
 				src/platform/emscripten/clock.h
 				src/platform/emscripten/interface.cpp
@@ -1273,7 +1294,8 @@ if(PLAYER_BUILD_EXECUTABLE AND ${PLAYER_TARGET_PLATFORM} MATCHES "^SDL.*$" AND N
 
 		target_link_libraries(${EXE_NAME} "idbfs.js")
 		target_link_libraries(${EXE_NAME} "websocket.js")
-		set_property(TARGET ${EXE_NAME} APPEND_STRING PROPERTY LINK_FLAGS " -s EXPORTED_RUNTIME_METHODS='[\"ccall\",\"cwrap\",\"intArrayFromString\",\"ALLOC_NORMAL\",\"allocate\",\"getValue\",\"FS\"]'")
+		target_link_libraries(${EXE_NAME} fmt::fmt)
+		set_property(TARGET ${EXE_NAME} APPEND_STRING PROPERTY LINK_FLAGS " -sEXPORTED_RUNTIME_METHODS='[\"ccall\",\"cwrap\",\"intArrayFromString\",\"ALLOC_NORMAL\",\"allocate\",\"getValue\",\"FS\"]'")
 		set_target_properties(${EXE_NAME} PROPERTIES OUTPUT_NAME "${PLAYER_JS_OUTPUT_NAME}")
 	endif()
 

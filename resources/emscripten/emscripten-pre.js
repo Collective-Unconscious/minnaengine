@@ -1,5 +1,6 @@
 // Note: The `Module` context is already initialized as an
 // empty object by emscripten even before the pre script
+
 Object.assign(Module, {
   preRun: [onPreRun],
   postRun: [],
@@ -135,3 +136,100 @@ window.addEventListener('error', (event) => {
     if (text) Module.printErr(`[post-exception status] ${text}`);
   };
 });
+
+globalThis.onRequestFile = function (ptr, len) {
+  const name = UTF8ToString(Number(ptr), Number(len));
+  console.log("Requested file:", name);
+};
+
+globalThis.onLoadMap = function (mapName) {
+  console.log("[onLoadMap]", mapName);
+};
+
+globalThis.onRoomSwitch = function () {
+  console.log("[onRoomSwitch]");
+};
+
+globalThis.syncPlayerData = function (
+  uuid,
+  rank,
+  accountBin,
+  badge,
+  medalsArray,
+  id
+) {
+  console.log("[syncPlayerData]", {
+    uuid,
+    rank,
+    accountBin,
+    badge,
+    medalsArray,
+    id
+  });
+};
+
+globalThis.onPlayerDisconnected = function (id) {
+  console.log("[onPlayerDisconnected]", id);
+};
+
+globalThis.onPlayerConnectedOrUpdated = function (system, name, id) {
+  console.log("[onPlayerConnectedOrUpdated]", {
+    system,
+    name,
+    id
+  });
+};
+
+globalThis.onUpdateConnectionStatus = function (status) {
+  console.log("[onUpdateConnectionStatus]", status);
+};
+
+globalThis.onReceiveInputFeedback = function (state) {
+  console.log("[onReceiveInputFeedback]", state);
+};
+
+globalThis.onNametagModeUpdated = function (mode) {
+  console.log("[onNametagModeUpdated]", mode);
+};
+
+globalThis.onPlayerSpriteUpdated = function (spriteName, index, id) {
+  console.log("[onPlayerSpriteUpdated]", {
+    spriteName,
+    index,
+    id
+  });
+};
+
+globalThis.onPlayerTeleported = function (mapId, x, y) {
+  console.log("[onPlayerTeleported]", {
+    mapId,
+    x,
+    y
+  });
+};
+
+globalThis.onSaveSlotUpdated = function (x) {
+  console.log("[onSaveSlotUpdated]", {
+    x
+  });
+};
+
+globalThis.onUpdateSystemGraphic = function (systemGraphic) {
+  console.log("[onUpdateSystemGraphic]", systemGraphic);
+};
+
+globalThis.onBadgeUpdateRequested = function () {
+  console.log("[onBadgeUpdateRequested]");
+};
+
+globalThis.showClientToastMessage = function (message, icon) {
+  console.log("[showClientToastMessage]", {
+    message,
+    icon
+  });
+};
+
+globalThis.shouldConnectPlayer = function (uuid) {
+  console.log("[shouldConnectPlayer]", uuid);
+  return true;
+};

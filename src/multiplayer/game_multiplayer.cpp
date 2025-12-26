@@ -774,6 +774,7 @@ void Game_Multiplayer::ApplyScreenTone() {
 void Game_Multiplayer::UpdateNBPlayers() {
 	if (!Player::IsCollectiveUnconscious()) return;
 	Main_Data::game_variables->Set(GlobalVariables::NB_PLAYERS, players.size() + 1);
+
 }
 
 void Game_Multiplayer::UpdateCUTime() {
@@ -790,7 +791,8 @@ void Game_Multiplayer::UpdateCUWeather() {
 }
 
 void Game_Multiplayer::UpdateGlobalVariables() {
-	UpdateNBPlayers();
+	if (!Main_Data::IsInit()) return;
+  UpdateNBPlayers();
   UpdateCUTime();
   UpdateCUWeather();
 }

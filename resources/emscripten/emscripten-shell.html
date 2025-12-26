@@ -148,6 +148,19 @@
     </div>
   </div>
 
+    <script>
+        var Module = {
+			canvas: (() => document.getElementById('canvas'))(),
+
+			onRuntimeInitialized() {
+				easyrpgPlayer = Module;
+				easyrpgPlayer.initApi();
+				canvas.focus();
+				console.log("EasyRPG runtime initialized");
+			}
+        };
+    </script>
+
 {{{ SCRIPT }}}
 
 <script>
@@ -160,19 +173,19 @@ let easyrpgPlayer;
 let lastTouchedId;
 
 // Launch the Player and configure it
-window.addEventListener('load', (event) => {
-    createEasyRpgPlayer({
-      game: undefined,
-      saveFs: undefined
-    }).then(function(Module) {
-      // Module is ready
-      easyrpgPlayer = Module;
-      easyrpgPlayer.initApi();
-      canvas.focus();
+//window.addEventListener('load', (event) => {
+//    createEasyRpgPlayer({
+//      game: undefined,
+//      saveFs: undefined
+//    }).then(function(Module) {
+//      // Module is ready
+//      easyrpgPlayer = Module;
+//      easyrpgPlayer.initApi();
+//      canvas.focus();
 
-      // Custom code here
-    });
-});
+//      // Custom code here
+//    });
+    //});
 
 // Make EasyRPG player embeddable
 canvas.addEventListener('mouseenter', () => canvas.focus());

@@ -153,6 +153,7 @@ bool Scene_Logo::DetectGame() {
 		detected_game = true;
 	}
 
+	assert(detected_game);
 	return true;
 }
 

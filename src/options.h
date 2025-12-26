@@ -19,7 +19,7 @@
 #define EP_OPTIONS_H
 
 /** Window title to show. */
-#define GAME_TITLE "YNOproject"
+#define GAME_TITLE "Collective Unconscious"
 
 // These two defines control the name of the folder structure in the global
 // configuration directory
@@ -84,6 +84,9 @@
 
 /** File name for additional metadata, such as multi-game save imports. */
 #define META_NAME "Meta.ini"
+
+/**Whether .esd format savegame loading is supported.*/
+#define ESD_SUPPORT false
 
 /**
  * RPG_RT.exe (official engine) filename.

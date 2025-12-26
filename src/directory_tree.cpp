@@ -36,7 +36,9 @@ static void DebugLog(const char*, Args&&...) {}
 
 namespace {
 	std::string make_key(std::string_view n) {
-		return lcf::ReaderUtil::Normalize(n);
+		std::string a = lcf::ReaderUtil::Normalize(n);
+		if (n == "") a = ".";
+		return a;
 	};
 }
 
@@ -87,7 +89,7 @@ bool DirectoryTree::WildcardMatch(const std::string_view& pattern, const std::st
 
 DirectoryTree::DirectoryListType* DirectoryTree::ListDirectory(std::string_view path) const {
 	std::vector<Entry> entries;
-	std::string fs_path = ToString(path);
+    std::string fs_path = ToString(path);
 
 	DebugLog("ListDirectory: {}", fs_path);
 
