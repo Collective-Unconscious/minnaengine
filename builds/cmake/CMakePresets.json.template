@@ -81,6 +81,23 @@
 			"easyrpg_platforms": ["sdl3", "sdl2"]
 		},
 		{
+			"name": "yno",
+			"displayName": "YNOproject",
+			"cacheVariables": {
+				"PLAYER_JS_OUTPUT_NAME": "ynoengine"
+			},
+			"inherits": "yno-user"
+		},
+		{
+			"name": "yno-simd",
+			"displayName": "YNOproject SIMD",
+			"cacheVariables": {
+				"PLAYER_JS_OUTPUT_NAME": "ynoengine-simd",
+				"CMAKE_CXX_FLAGS": "-msimd128"
+			},
+			"inherits": "yno-user"
+		},
+		{
 			"name": "android-armeabi-v7a",
 			"displayName": "Android armeabi-v7a",
 			"cacheVariables": {
