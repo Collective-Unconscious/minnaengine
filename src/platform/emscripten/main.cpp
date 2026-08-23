@@ -31,8 +31,8 @@ namespace {
 static void LogCallback(LogLevel lvl, std::string const& msg, LogCallbackUserData /* userdata */) {
 // Allow pretty log output and filtering in browser console
 EM_ASM({
-  lvl = $0;
-  msg = UTF8ToString($1);
+  var lvl = $0;
+  var msg = UTF8ToString($1);
 
   switch (lvl) {
 	case 0:

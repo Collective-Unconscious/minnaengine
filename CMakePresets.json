@@ -848,50 +848,67 @@
 		},
 		{
 			"name": "yno-parent",
-			"hidden": true,
 			"cacheVariables": {
-				"CMAKE_FIND_ROOT_PATH_MODE_LIBRARY": "BOTH",
-				"CMAKE_FIND_ROOT_PATH_MODE_INCLUDE": "BOTH",
-				"CMAKE_FIND_ROOT_PATH_MODE_PACKAGE": "BOTH",
-				"CMAKE_CXX_COMPILER_LAUNCHER": "ccache",
-				"CMAKE_PREFIX_PATH": "$env{EASYRPG_BUILDSCRIPTS}/emscripten",
-				"PLAYER_ENABLE_FMMIDI": "OFF",
-				"PLAYER_WITH_MPG123": "OFF",
-				"PLAYER_WITH_LIBSNDFILE": "OFF",
-				"PLAYER_WITH_OGGVORBIS": "OFF",
-				"PLAYER_WITH_WILDMIDI": "OFF",
-				"PLAYER_WITH_FLUIDLITE": "OFF",
-				"PLAYER_WITH_XMP": "OFF",
-				"PLAYER_ENABLE_DRWAV": "OFF",
-				"PLAYER_JS_BUILD_SHELL": "ON",
-				"PLAYER_JS_OUTPUT_NAME": "ynoengine",
-				"PLAYER_JS_GAME_URL": "/data/",
-				"CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
-			}
+				"PLAYER_JS_OUTPUT_NAME": "ynoengine"
+			},
+			"inherits": "yno-user",
+			"hidden": true
 		},
 		{
-			"name": "yno-simd-parent",
-			"hidden": true,
-			"inherits": "yno-parent",
-			"cacheVariables": {
-				"PLAYER_JS_OUTPUT_NAME": "ynoengine-simd",
-				"CMAKE_CXX_FLAGS": "-msimd128"
-			}
+			"name": "yno-debug",
+			"displayName": "YNOproject (Debug)",
+			"inherits": [
+				"yno-parent",
+				"type-debug"
+			]
+		},
+		{
+			"name": "yno-relwithdebinfo",
+			"displayName": "YNOproject (RelWithDebInfo)",
+			"inherits": [
+				"yno-parent",
+				"type-relwithdebinfo"
+			]
 		},
 		{
 			"name": "yno-release",
 			"displayName": "YNOproject (Release)",
 			"inherits": [
-				"emscripten-release",
-				"yno-parent"
+				"yno-parent",
+				"type-release"
+			]
+		},
+		{
+			"name": "yno-simd-parent",
+			"cacheVariables": {
+				"PLAYER_JS_OUTPUT_NAME": "ynoengine-simd",
+				"CMAKE_CXX_FLAGS": "-msimd128"
+			},
+			"inherits": "yno-user",
+			"hidden": true
+		},
+		{
+			"name": "yno-simd-debug",
+			"displayName": "YNOproject SIMD (Debug)",
+			"inherits": [
+				"yno-simd-parent",
+				"type-debug"
+			]
+		},
+		{
+			"name": "yno-simd-relwithdebinfo",
+			"displayName": "YNOproject SIMD (RelWithDebInfo)",
+			"inherits": [
+				"yno-simd-parent",
+				"type-relwithdebinfo"
 			]
 		},
 		{
 			"name": "yno-simd-release",
-			"displayName": "YNOproject (Release, SIMD)",
+			"displayName": "YNOproject SIMD (Release)",
 			"inherits": [
-				"emscripten-release",
-				"yno-simd-parent"
+				"yno-simd-parent",
+				"type-release"
 			]
 		},
 		{
@@ -1812,8 +1829,24 @@
 			"configurePreset": "emscripten-sdl2-release"
 		},
 		{
+			"name": "yno-debug",
+			"configurePreset": "yno-debug"
+		},
+		{
+			"name": "yno-relwithdebinfo",
+			"configurePreset": "yno-relwithdebinfo"
+		},
+		{
 			"name": "yno-release",
 			"configurePreset": "yno-release"
+		},
+		{
+			"name": "yno-simd-debug",
+			"configurePreset": "yno-simd-debug"
+		},
+		{
+			"name": "yno-simd-relwithdebinfo",
+			"configurePreset": "yno-simd-relwithdebinfo"
 		},
 		{
 			"name": "yno-simd-release",

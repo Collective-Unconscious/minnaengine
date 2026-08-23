@@ -50,6 +50,14 @@
 			"inherits": ["android-base", "base-user"]
 		},
 		{
+			"name": "yno-user",
+			"displayName": "user overrides for YNOproject",
+			"hidden": true,
+			"environment": {
+			},
+			"inherits": ["yno-base", "base-user"]
+		},
+		{
 			"name": "dkp-user",
 			"displayName": "user overrides for devkitPro",
 			"hidden": true,

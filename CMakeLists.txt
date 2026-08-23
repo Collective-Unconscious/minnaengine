@@ -899,6 +899,7 @@ if(APPLE)
 endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+	option(PLAYER_JS_ENABLE_ES6 "Emit an ES6 module and accompanying TypeScript type definition file (*.d.ts)" OFF)
 	option(PLAYER_JS_BUILD_SHELL "Build the Player executable as a shell file (.html) instead of a standalone javascript file (.js)" OFF)
 	set(PLAYER_JS_GAME_URL "games/" CACHE STRING "Game URL/directory where the web player searches for games")
 	set(PLAYER_JS_OUTPUT_NAME "easyrpg-player" CACHE STRING "Output name of the js, html and wasm files")
@@ -1258,6 +1259,10 @@ if(PLAYER_BUILD_EXECUTABLE AND ${PLAYER_TARGET_PLATFORM} MATCHES "^SDL.*$" AND N
 			 -sEXPORTED_FUNCTIONS=_main,_malloc,_free")
 		set_source_files_properties("src/platform/sdl/main.cpp" PROPERTIES
 			OBJECT_DEPENDS "${PLAYER_JS_PREJS};${PLAYER_JS_POSTJS};${PLAYER_JS_SHELL}")
+
+		if(PLAYER_JS_ENABLE_ES6)
+			set_property(TARGET ${EXE_NAME} APPEND_STRING PROPERTY LINK_FLAGS " -sEXPORT_ES6 --emit-tsd ${PLAYER_JS_OUTPUT_NAME}.d.ts")
+		endif()
 
 		if(PLAYER_JS_BUILD_SHELL)
 			set_target_properties(${EXE_NAME} PROPERTIES SUFFIX ".html")
