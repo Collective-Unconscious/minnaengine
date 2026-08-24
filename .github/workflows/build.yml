@@ -18,9 +18,6 @@ jobs:
     runs-on: ubuntu-26.04
 
     steps:
-      - name: Clone Repository
-        uses: actions/checkout@v7
-
       - name: Clone buildscripts
         uses: actions/checkout@v7
         id: checkout-buildscripts
@@ -91,18 +88,10 @@ jobs:
           export DEBIAN_FRONTEND="noninteractive"
           sudo apt-get update
           sudo apt-get install -yqq --no-install-recommends --no-install-suggests \
-            ca-certificates build-essential cmake ninja-build meson git ccache
+            ca-certificates build-essential cmake ninja-build git ccache
 
-      - name: Clone Repository
+      - name: Clone repository
         uses: actions/checkout@v7
-
-      - name: Clone buildscripts
-        uses: actions/checkout@v7
-        id: checkout-buildscripts
-        with:
-          repository: EasyRPG/buildscripts
-          ref: "b3ed5f25c0aa9d3cfac39cec7d3e9e0614f68c7d"
-          path: buildscripts
 
       - name: Restore buildscripts cache
         uses: actions/cache/restore@v6
