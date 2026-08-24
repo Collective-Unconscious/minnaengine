@@ -34,7 +34,7 @@ jobs:
           echo "${{ steps.checkout-buildscripts.outputs.commit }}"
 
       - name: Check cache
-        uses: actions/cache@v6
+        uses: actions/cache/restore@v6
         id: cache-buildscripts
         with:
           path: |
@@ -43,30 +43,37 @@ jobs:
             buildscripts/emscripten/lib
             buildscripts/emscripten/include
           lookup-only: true
-          key: buildscripts-${{ steps.checkout-buildscripts.outputs.commit }}-${{ runner.os }}
-          restore-keys: |
-            buildscripts-${{ steps.checkout-buildscripts.outputs.commit }}-
-            engine-${{ steps.checkout-buildscripts.outputs.commit }}-
-            buildscripts-
+          key: buildscripts-${{ runner.os }}-${{ steps.checkout-buildscripts.outputs.commit }}
 
       - name: Install dependencies
+        if: steps.cache-buildscripts.outputs.cache-hit != 'true'
         run: |
           export DEBIAN_FRONTEND="noninteractive"
           sudo apt-get update
           sudo apt-get install -yqq --no-install-recommends --no-install-suggests \
             ca-certificates build-essential cmake ninja-build meson git ccache
-        if: steps.cache-buildscripts.outputs.cache-hit != 'true'
 
       - name: Use gcc problem matcher
-        run: echo "::add-matcher::.github/gcc_comment_matcher.json"
         if: steps.cache-buildscripts.outputs.cache-hit != 'true'
+        run: echo "::add-matcher::.github/gcc_comment_matcher.json"
 
       - name: Install Player dependencies
+        if: steps.cache-buildscripts.outputs.cache-hit != 'true'
         run: ./0_build_everything.sh
         working-directory: buildscripts/emscripten
         env:
           BUILD_LIBLCF: "1"
+
+      - name: Save cache
+        uses: actions/cache/save@v6
         if: steps.cache-buildscripts.outputs.cache-hit != 'true'
+        with:
+          path: |
+            buildscripts/emscripten/emsdk-portable
+            buildscripts/emscripten/bin
+            buildscripts/emscripten/lib
+            buildscripts/emscripten/include
+          key: buildscripts-${{ runner.os }}-${{ steps.checkout-buildscripts.outputs.commit }}
 
   build:
     name: Emscripten
@@ -97,18 +104,15 @@ jobs:
           ref: "b3ed5f25c0aa9d3cfac39cec7d3e9e0614f68c7d"
           path: buildscripts
 
-      - name: Buildscripts cache
-        uses: actions/cache@v6
+      - name: Restore buildscripts cache
+        uses: actions/cache/restore@v6
         with:
           path: |
             buildscripts/emscripten/emsdk-portable
             buildscripts/emscripten/bin
             buildscripts/emscripten/lib
             buildscripts/emscripten/include
-          key: buildscripts-${{ steps.checkout-buildscripts.outputs.commit }}-${{ runner.os }}
-          restore-keys: |
-            buildscripts-${{ steps.checkout-buildscripts.outputs.commit }}-
-            buildscripts-
+          key: buildscripts-${{ runner.os }}-${{ steps.checkout-buildscripts.outputs.commit }}
 
       - name: Configure
         run: |
