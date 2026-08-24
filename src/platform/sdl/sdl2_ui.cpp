@@ -354,15 +354,21 @@ bool Sdl2Ui::RefreshDisplayMode() {
 		flags |= SDL_WINDOW_ALLOW_HIGHDPI;
 		#endif
 
+#ifndef EMSCRIPTEN
+		const char* windowTitle = GAME_TITLE;
+#else
+		const char* windowTitle = nullptr;
+#endif
+		
 		// Create our window
 		if (vcfg.window_x.Get() < 0 || vcfg.window_y.Get() < 0 || vcfg.window_height.Get() <= 0 || vcfg.window_width.Get() <= 0) {
-			sdl_window = SDL_CreateWindow(GAME_TITLE,
+			sdl_window = SDL_CreateWindow(windowTitle,
 				SDL_WINDOWPOS_CENTERED,
 				SDL_WINDOWPOS_CENTERED,
 				display_width_zoomed, display_height_zoomed,
 				SDL_WINDOW_RESIZABLE | flags);
 		} else {
-			sdl_window = SDL_CreateWindow(GAME_TITLE,
+			sdl_window = SDL_CreateWindow(windowTitle,
 				vcfg.window_x.Get(),
 				vcfg.window_y.Get(),
 				vcfg.window_width.Get(), vcfg.window_height.Get(),
@@ -697,6 +703,9 @@ void Sdl2Ui::UpdateDisplay() {
 }
 
 void Sdl2Ui::SetTitle(const std::string &title) {
+#ifdef EMSCRIPTEN
+	return;
+#endif
 	SDL_SetWindowTitle(sdl_window, title.c_str());
 }
 
