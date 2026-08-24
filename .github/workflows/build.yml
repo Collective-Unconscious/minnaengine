@@ -26,10 +26,6 @@ jobs:
           ref: "b3ed5f25c0aa9d3cfac39cec7d3e9e0614f68c7d"
           path: buildscripts
 
-      - name: Test
-        run: |
-          echo "${{ steps.checkout-buildscripts.outputs.commit }}"
-
       - name: Check cache
         uses: actions/cache/restore@v6
         id: cache-buildscripts
