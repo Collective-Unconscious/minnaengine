@@ -73,7 +73,7 @@ jobs:
           key: buildscripts-${{ runner.os }}-${{ steps.checkout-buildscripts.outputs.commit }}
 
   build:
-    name: Emscripten
+    name: Emscripten (${{ matrix.profile.preset }})
     runs-on: ubuntu-26.04
     needs: setup
 
