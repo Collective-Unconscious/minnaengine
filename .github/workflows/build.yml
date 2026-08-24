@@ -18,6 +18,9 @@ jobs:
     runs-on: ubuntu-26.04
 
     steps:
+      - name: Clone repository
+        uses: actions/checkout@v7
+
       - name: Clone buildscripts
         uses: actions/checkout@v7
         id: checkout-buildscripts
@@ -45,9 +48,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install -yqq --no-install-recommends --no-install-suggests \
             ca-certificates build-essential cmake ninja-build meson git ccache
-
-      - name: Clone repository
-        uses: actions/checkout@v7
 
       - name: Use gcc problem matcher
         if: steps.cache-buildscripts.outputs.cache-hit != 'true'
@@ -105,6 +105,10 @@ jobs:
             buildscripts/emscripten/lib
             buildscripts/emscripten/include
           key: buildscripts-${{ runner.os }}-${{ steps.checkout-buildscripts.outputs.commit }}
+
+      - name: Use gcc problem matcher
+        if: steps.cache-buildscripts.outputs.cache-hit != 'true'
+        run: echo "::add-matcher::.github/gcc_comment_matcher.json"
 
       - name: Configure
         run: |
