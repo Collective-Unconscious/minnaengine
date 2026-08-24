@@ -22,16 +22,24 @@
 #include "player.h"
 #include "scene_load.h"
 #include "scene_map.h"
+#include "platform/emscripten/interface.h"
 
 Scene_Load::Scene_Load() :
 	Scene_File(ToString(lcf::Data::terms.load_game_message)) {
 	Scene::type = Scene::Load;
 }
 
-void Scene_Load::Action(int index) {
-	std::string save_name = fs.FindFile(fmt::format("Save{:02d}.lsd", index + 1));
+void Scene_Load::Action(int index, ActionType act) {
 
-	Player::LoadSavegame(save_name, index + 1);
+	if (act == ActionType::LoadLocal) {
+		Emscripten_Interface::UploadSavegame(index+1);
+	}
+	else if(act == ActionType::LoadCache) {
+		bool esd = false;
+		std::string save_name = fs.FindFile(fmt::format("Save{:02d}.lsd", index + 1));
+		if (save_name.empty()) { save_name = fs.FindFile(fmt::format("Save{:02d}.esd", index + 1)); esd = true; }
+		Player::LoadSavegame(save_name, index + 1, esd);
+	}
 }
 
 bool Scene_Load::IsSlotValid(int index) {

@@ -35,6 +35,12 @@
 class Scene_File : public Scene {
 
 public:
+
+	enum ActionType {
+		LoadLocal,
+		LoadCache
+	};
+
 	/**
 	 * Constructor.
 	 *
@@ -46,7 +52,7 @@ public:
 	void vUpdate() override;
 	void Refresh() override;
 
-	virtual void Action(int index) = 0;
+	virtual void Action(int index, ActionType act) = 0;
 
 	virtual bool IsSlotValid(int index) = 0;
 

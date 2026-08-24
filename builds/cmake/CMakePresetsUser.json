@@ -12,7 +12,6 @@
 			"cacheVariables":{
 			},
 			"environment": {
-				"#EASYRPG_BUILDSCRIPTS": "/path/to/easyrpg/buildscripts"
 			},
 			"vendor": {
 				"README": {

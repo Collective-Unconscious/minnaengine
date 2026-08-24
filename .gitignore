@@ -78,6 +78,7 @@ cmake-build*/
 .cache/
 compile_commands.json
 build/
+build2/
 
 # doxygen
 /resources/Doxyfile

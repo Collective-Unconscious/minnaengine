@@ -137,7 +137,7 @@ void Scene_Import::FinishScan() {
 	progress_window->SetVisible(false);
 }
 
-void Scene_Import::Action(int index) {
+void Scene_Import::Action(int index, ActionType act) {
 	Player::LoadSavegame(files[index].full_path);
 }
 

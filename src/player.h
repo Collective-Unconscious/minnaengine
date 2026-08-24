@@ -174,7 +174,7 @@ namespace Player {
 	 * @param save_file Savegame file to load
 	 * @param save_id ID of the savegame to load
 	 */
-	void LoadSavegame(const std::string& save_file, int save_id = 0);
+	void LoadSavegame(const std::string& save_file, int save_id = 0, bool esd=false);
 
 	/**
 	 * Starts a new game
@@ -380,6 +380,9 @@ namespace Player {
 
 	/** If set, savegame is loaded directly */
 	extern int load_game_id;
+
+	/** Loads a local save file if true*/
+	extern bool load_local;
 
 	/** Prevent adding of RTP paths to the file finder */
 	extern bool no_rtp_flag;

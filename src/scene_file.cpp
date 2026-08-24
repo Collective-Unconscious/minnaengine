@@ -90,10 +90,14 @@ void Scene_File::UpdateLatestTimestamp(int id, lcf::rpg::Save& savegame) {
 
 void Scene_File::PopulateSaveWindow(Window_SaveFile& win, int id) {
 	// Try to access file
-	std::stringstream ss;
+	std::stringstream ss, sss;
 	ss << "Save" << (id <= 8 ? "0" : "") << (id + 1) << ".lsd";
+	sss << "Save" << (id <= 8 ? "0" : "") << (id + 1) << ".esd";
 
-	std::string file = fs.FindFile(ss.str());
+	std::string filelsd = fs.FindFile(ss.str());
+	std::string fileesd = fs.FindFile(sss.str());
+
+	std::string file = filelsd.empty() && ESD_SUPPORT ? fileesd : filelsd;
 
 	if (!file.empty()) {
 		// File found
@@ -104,7 +108,10 @@ void Scene_File::PopulateSaveWindow(Window_SaveFile& win, int id) {
 			return;
 		}
 
-		std::unique_ptr<lcf::rpg::Save> savegame = lcf::LSD_Reader::Load(save_stream, Player::encoding);
+		std::unique_ptr<lcf::rpg::Save> savegame;
+
+		if(filelsd.empty()) savegame = lcf::LSD_Reader::LoadXml(save_stream);
+		else savegame = lcf::LSD_Reader::Load(save_stream);
 
 		if (savegame) {
 			PopulatePartyFaces(win, id, *savegame);
@@ -195,13 +202,14 @@ void Scene_File::vUpdate() {
 	} else if (Input::IsTriggered(Input::DECISION)) {
 		if (IsSlotValid(index)) {
 			Main_Data::game_system->SePlay(Main_Data::game_system->GetSystemSE(Main_Data::game_system->SFX_Decision));
-			Action(index);
+			Action(index, ActionType::LoadCache);
 		}
 		else {
 			Main_Data::game_system->SePlay(Main_Data::game_system->GetSystemSE(Main_Data::game_system->SFX_Buzzer));
 		}
 	} else if (Input::IsTriggered(Input::SHIFT)) {
 #ifdef EMSCRIPTEN
+		//Action(index, ActionType::LoadLocal);
 		extra_commands_window->SetX(SCREEN_TARGET_WIDTH - extra_commands_window->GetWidth() - 8);
 		extra_commands_window->SetY(file_windows[index]->GetY() + 8);
 		extra_commands_window->SetItemEnabled(0, file_windows[index]->IsValid() && file_windows[index]->HasParty());

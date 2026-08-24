@@ -44,6 +44,7 @@
 #include "scene_save.h"
 #include "translation.h"
 #include "version.h"
+#include "platform/emscripten/interface.h"
 
 Scene_Save::Scene_Save() :
 	Scene_File(ToString(lcf::Data::terms.save_game_message)) {
@@ -59,40 +60,54 @@ void Scene_Save::Start() {
 	}
 }
 
-void Scene_Save::Action(int index) {
-	Save(fs, index + 1);
+void Scene_Save::Action(int index, ActionType act) {
 
-	Scene::Pop();
+	if (act == ActionType::LoadCache) {
+		Save(fs, index + 1);
+		Scene::Pop();
+	}
+	else if (act == ActionType::LoadLocal) Emscripten_Interface::DownloadSavegame(index+1);
+
 }
 
-std::string Scene_Save::GetSaveFilename(const FilesystemView& fs, int slot_id) {
-	const auto save_file = fmt::format("Save{:02d}.lsd", slot_id);
+std::pair<std::string, bool> Scene_Save::GetSaveFilename(const FilesystemView& fs, int slot_id, bool esd) {
+
+	std::string save_file;
+
+	save_file = esd && ESD_SUPPORT ? fmt::format("Save{:02d}.esd", slot_id) : fmt::format("Save{:02d}.lsd", slot_id);
 
 	std::string filename = fs.FindFile(save_file);
 
 	if (filename.empty()) {
 		filename = save_file;
 	}
-	return filename;
+
+	return std::make_pair(filename, esd&&ESD_SUPPORT);
 }
 
 bool Scene_Save::Save(const FilesystemView& fs, int slot_id, bool prepare_save) {
-	const auto filename = GetSaveFilename(fs, slot_id);
+	const auto saveesd = GetSaveFilename(fs, slot_id, true);
+	const auto savelsd = GetSaveFilename(fs, slot_id);
+	std::string filename = savelsd.first;
+	std::string filename2 = saveesd.first;
 	Output::Debug("Saving to {}", filename);
 
 	auto save_stream = FileFinder::Save().OpenOutputStream(filename);
+	auto save_stream2 = FileFinder::Save().OpenOutputStream(filename2);
 
 	if (!save_stream) {
 		Output::Warning("Failed saving to {}", filename);
 		return false;
 	}
 
-	return Save(save_stream, slot_id, prepare_save);
+	return Save(save_stream, slot_id, prepare_save, savelsd.second) || Save(save_stream2, slot_id, prepare_save, saveesd.second);
 }
 
-bool Scene_Save::Save(std::ostream& os, int slot_id, bool prepare_save) {
+bool Scene_Save::Save(std::ostream& os, int slot_id, bool prepare_save, bool esd) {
+	if (!os) return false;
 	lcf::rpg::Save save;
 	auto& title = save.title;
+
 	// TODO: Maybe find a better place to setup the save file?
 
 	int size = (int)Main_Data::game_party->GetActors().size();
@@ -154,7 +169,8 @@ bool Scene_Save::Save(std::ostream& os, int slot_id, bool prepare_save) {
 		}
 	}
 	auto lcf_engine = Player::IsRPG2k3() ? lcf::EngineVersion::e2k3 : lcf::EngineVersion::e2k;
-	bool res = lcf::LSD_Reader::Save(os, save, lcf_engine, Player::encoding);
+	bool res = lcf::LSD_Reader::Save(os, save, lcf_engine);
+	if((!res&&ESD_SUPPORT)||esd) lcf::LSD_Reader::SaveXml(os, save, lcf_engine);
 
 	Main_Data::game_dynrpg->Save(slot_id);
 

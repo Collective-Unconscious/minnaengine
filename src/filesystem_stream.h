@@ -97,6 +97,36 @@ namespace Filesystem_Stream {
 		std::vector<uint8_t> buffer;
 	};
 
+	class Outbuf : public std::streambuf {
+	public:
+		explicit Outbuf(std::vector<uint8_t>& out)
+			: buffer(out) {
+		}
+
+	protected:
+		// Called when writing a block of bytes
+		std::streamsize xsputn(const char* s, std::streamsize n) override {
+			buffer.insert(
+				buffer.end(),
+				reinterpret_cast<const uint8_t*>(s),
+				reinterpret_cast<const uint8_t*>(s + n)
+			);
+			return n;
+		}
+
+		// Called when writing a single byte
+		int overflow(int ch) override {
+			if (ch != traits_type::eof()) {
+				buffer.push_back(static_cast<uint8_t>(ch));
+			}
+			return ch;
+		}
+
+	private:
+		std::vector<uint8_t>& buffer;
+
+	};
+
 #ifdef USE_CUSTOM_FILEBUF
 	class FdStreamBuf : public std::streambuf {
 	public:

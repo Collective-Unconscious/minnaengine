@@ -109,6 +109,7 @@ namespace Player {
 	bool reset_flag = false;
 	bool debug_flag;
 	bool hide_title_flag;
+	bool load_local;
 	int load_game_id;
 	int party_x_position;
 	int party_y_position;
@@ -441,6 +442,7 @@ Game_Config Player::ParseCommandLine() {
 	party_x_position = -1;
 	party_y_position = -1;
 	start_map_id = -1;
+	load_local = false;
 	no_rtp_flag = false;
 	no_audio_flag = false;
 	is_easyrpg_project = false;
@@ -1145,7 +1147,7 @@ static void OnMapSaveFileReady(FileRequestResult*, lcf::rpg::Save save) {
 			std::move(save.common_events));
 }
 
-void Player::LoadSavegame(const std::string& save_name, int save_id) {
+void Player::LoadSavegame(const std::string& save_name, int save_id, bool esd) {
 	Output::Debug("Loading Save {}", save_name);
 
 	bool load_on_map = Scene::instance->type == Scene::Map;
@@ -1169,7 +1171,10 @@ void Player::LoadSavegame(const std::string& save_name, int save_id) {
 		return;
 	}
 
-	std::unique_ptr<lcf::rpg::Save> save = lcf::LSD_Reader::Load(save_stream, encoding);
+	std::unique_ptr<lcf::rpg::Save> save;
+
+	if(esd) save = lcf::LSD_Reader::LoadXml(save_stream);
+	else save = lcf::LSD_Reader::Load(save_stream);
 
 	if (!save.get()) {
 		Output::ErrorStr(lcf::LcfReader::GetError());

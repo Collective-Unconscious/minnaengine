@@ -133,6 +133,9 @@ constexpr Var_t VarBitShiftRight(Var_t n, Var_t d) {
 Game_Variables::Game_Variables(Var_t minval, Var_t maxval)
 	: _min(minval), _max(maxval)
 {
+	_variables.clear();
+	_variables.resize(10000, 0);
+
 	if (minval >= maxval) {
 		Output::Error("Variables: Invalid var range: [{}, {}]", minval, maxval);
 	}
@@ -152,9 +155,7 @@ Game_Variables::Var_t Game_Variables::SetOp(int variable_id, Var_t value, F&& op
 	if (variable_id <= 0) {
 		return 0;
 	}
-	if (EP_UNLIKELY(variable_id > static_cast<int>(_variables.size()))) {
-		_variables.resize(variable_id, 0);
-	}
+
 	auto& v = _variables[variable_id - 1];
 	value = op(v, value);
 	v = Utils::Clamp(value, _min, _max);
