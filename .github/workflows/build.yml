@@ -35,7 +35,7 @@ jobs:
 
       - name: Check cache
         uses: actions/cache@v6
-        id: cache
+        id: cache-buildscripts
         with:
           path: |
             buildscripts/emscripten/emsdk-portable
@@ -43,10 +43,11 @@ jobs:
             buildscripts/emscripten/lib
             buildscripts/emscripten/include
           lookup-only: true
-          key: engine-${{ steps.checkout-buildscripts.outputs.commit }}-${{ runner.os }}
+          key: buildscripts-${{ steps.checkout-buildscripts.outputs.commit }}-${{ runner.os }}
           restore-keys: |
-            easyrpg-emscripten-${{ steps.checkout-buildscripts.outputs.commit }}-
-            easyrpg-emscripten-
+            buildscripts-${{ steps.checkout-buildscripts.outputs.commit }}-
+            engine-${{ steps.checkout-buildscripts.outputs.commit }}-
+            buildscripts-
 
       - name: Install dependencies
         run: |
@@ -54,18 +55,18 @@ jobs:
           sudo apt-get update
           sudo apt-get install -yqq --no-install-recommends --no-install-suggests \
             ca-certificates build-essential cmake ninja-build meson git ccache
-        if: steps.cache.outputs.cache-hit != 'true'
+        if: steps.cache-buildscripts.outputs.cache-hit != 'true'
 
       - name: Use gcc problem matcher
         run: echo "::add-matcher::.github/gcc_comment_matcher.json"
-        if: steps.cache.outputs.cache-hit != 'true'
+        if: steps.cache-buildscripts.outputs.cache-hit != 'true'
 
       - name: Install Player dependencies
         run: ./0_build_everything.sh
         working-directory: buildscripts/emscripten
         env:
           BUILD_LIBLCF: "1"
-        if: steps.cache.outputs.cache-hit != 'true'
+        if: steps.cache-buildscripts.outputs.cache-hit != 'true'
 
   build:
     name: Emscripten
@@ -96,19 +97,18 @@ jobs:
           ref: "b3ed5f25c0aa9d3cfac39cec7d3e9e0614f68c7d"
           path: buildscripts
 
-      - name: Check cache
+      - name: Buildscripts cache
         uses: actions/cache@v6
-        id: cache
         with:
           path: |
             buildscripts/emscripten/emsdk-portable
             buildscripts/emscripten/bin
             buildscripts/emscripten/lib
             buildscripts/emscripten/include
-          key: engine-${{ steps.checkout-buildscripts.outputs.commit }}-${{ runner.os }}
+          key: buildscripts-${{ steps.checkout-buildscripts.outputs.commit }}-${{ runner.os }}
           restore-keys: |
-            easyrpg-emscripten-${{ steps.checkout-buildscripts.outputs.commit }}-
-            easyrpg-emscripten-
+            buildscripts-${{ steps.checkout-buildscripts.outputs.commit }}-
+            buildscripts-
 
       - name: Configure
         run: |
