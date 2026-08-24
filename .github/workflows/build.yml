@@ -26,8 +26,8 @@ jobs:
       - name: Install dependencies
         run: |
           export DEBIAN_FRONTEND="noninteractive"
-          apt-get update
-          apt-get install -yqq --no-install-recommends --no-install-suggests \
+          sudo apt-get update
+          sudo apt-get install -yqq --no-install-recommends --no-install-suggests \
             ca-certificates build-essential cmake ninja-build meson git ccache
 
       - name: Clone Repository
