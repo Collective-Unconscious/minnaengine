@@ -80,7 +80,11 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        preset: [yno-release, yno-simd-release]
+        profile:
+          - preset: yno-release
+            bin: ynoengine
+          - preset: yno-simd-release
+            bin: ynoengine-simd
 
     steps:
       - name: Install dependencies
@@ -106,7 +110,7 @@ jobs:
       - name: Configure
         run: |
           VER="(GA, `date +%Y-%m-%d`)"
-          cmake --preset ${{ matrix.preset }} \
+          cmake --preset ${{ matrix.profile.preset }} \
             -DCMAKE_CXX_FLAGS="-Wall -Wextra -Wdeprecated -fsanitize=address,undefined" \
             -DPLAYER_VERSION_APPEND="$VER"
         env:
@@ -114,4 +118,11 @@ jobs:
 
       - name: Build
         run: |
-          cmake --build --preset ${{ matrix.preset }}
+          cmake --build --preset ${{ matrix.profile.preset }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.profile.bin }}
+          path: build/${{ matrix.profile.preset }}/${{ matrix.profile.bin }}.*
+          if-no-files-found: warn
