@@ -1,0 +1,131 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  setup:
+    name: Set up environment
+    runs-on: ubuntu-26.04
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v7
+
+      - name: Clone buildscripts
+        uses: actions/checkout@v7
+        id: checkout-buildscripts
+        with:
+          repository: EasyRPG/buildscripts
+          ref: "b3ed5f25c0aa9d3cfac39cec7d3e9e0614f68c7d"
+          path: buildscripts
+
+      - name: Check cache
+        uses: actions/cache/restore@v6
+        id: cache-buildscripts
+        with:
+          path: |
+            buildscripts/emscripten/emsdk-portable
+            buildscripts/emscripten/bin
+            buildscripts/emscripten/lib
+            buildscripts/emscripten/include
+          lookup-only: true
+          key: buildscripts-${{ runner.os }}-${{ steps.checkout-buildscripts.outputs.commit }}
+
+      - name: Install dependencies
+        if: steps.cache-buildscripts.outputs.cache-hit != 'true'
+        run: |
+          export DEBIAN_FRONTEND="noninteractive"
+          sudo apt-get update
+          sudo apt-get install -yqq --no-install-recommends --no-install-suggests \
+            ca-certificates build-essential cmake ninja-build meson git ccache
+
+      - name: Use gcc problem matcher
+        if: steps.cache-buildscripts.outputs.cache-hit != 'true'
+        run: echo "::add-matcher::.github/gcc_comment_matcher.json"
+
+      - name: Install Player dependencies
+        if: steps.cache-buildscripts.outputs.cache-hit != 'true'
+        run: ./0_build_everything.sh
+        working-directory: buildscripts/emscripten
+        env:
+          BUILD_LIBLCF: "1"
+
+      - name: Save cache
+        uses: actions/cache/save@v6
+        if: steps.cache-buildscripts.outputs.cache-hit != 'true'
+        with:
+          path: |
+            buildscripts/emscripten/emsdk-portable
+            buildscripts/emscripten/bin
+            buildscripts/emscripten/lib
+            buildscripts/emscripten/include
+          key: buildscripts-${{ runner.os }}-${{ steps.checkout-buildscripts.outputs.commit }}
+
+  build:
+    name: Emscripten (${{ matrix.profile.preset }})
+    runs-on: ubuntu-26.04
+    needs: setup
+
+    strategy:
+      fail-fast: true
+      matrix:
+        profile:
+          - preset: yno-release
+            bin: ynoengine
+          - preset: yno-simd-release
+            bin: ynoengine-simd
+
+    steps:
+      - name: Install dependencies
+        run: |
+          export DEBIAN_FRONTEND="noninteractive"
+          sudo apt-get update
+          sudo apt-get install -yqq --no-install-recommends --no-install-suggests \
+            ca-certificates build-essential cmake ninja-build git ccache
+
+      - name: Clone repository
+        uses: actions/checkout@v7
+
+      - name: Restore buildscripts cache
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            buildscripts/emscripten/emsdk-portable
+            buildscripts/emscripten/bin
+            buildscripts/emscripten/lib
+            buildscripts/emscripten/include
+          key: buildscripts-${{ runner.os }}-${{ steps.checkout-buildscripts.outputs.commit }}
+
+      - name: Use gcc problem matcher
+        if: steps.cache-buildscripts.outputs.cache-hit != 'true'
+        run: echo "::add-matcher::.github/gcc_comment_matcher.json"
+
+      - name: Configure
+        run: |
+          VER="(GA, `date +%Y-%m-%d`)"
+          cmake --preset ${{ matrix.profile.preset }} \
+            -DCMAKE_CXX_FLAGS="-Wall -Wextra -Wdeprecated -fsanitize=address,undefined" \
+            -DPLAYER_VERSION_APPEND="$VER"
+        env:
+          EASYRPG_BUILDSCRIPTS: "${{ github.workspace }}/buildscripts"
+
+      - name: Build
+        run: |
+          cmake --build --preset ${{ matrix.profile.preset }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.profile.bin }}
+          path: build/${{ matrix.profile.preset }}/${{ matrix.profile.bin }}.*
+          if-no-files-found: warn
