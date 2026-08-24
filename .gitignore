@@ -73,6 +73,9 @@ vcpkg/
 .idea/
 cmake-build*/
 
+# Zed editor
+.zed/
+
 # VS Code
 .vscode/
 .cache/
