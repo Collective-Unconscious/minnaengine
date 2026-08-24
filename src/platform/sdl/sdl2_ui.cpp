@@ -355,9 +355,9 @@ bool Sdl2Ui::RefreshDisplayMode() {
 		#endif
 
 #ifndef EMSCRIPTEN
-        const char* windowTitle = GAME_TITLE;
+		const char* windowTitle = GAME_TITLE;
 #else
-        const char* windowTitle = nullptr;
+		const char* windowTitle = nullptr;
 #endif
 		
 		// Create our window
@@ -704,7 +704,7 @@ void Sdl2Ui::UpdateDisplay() {
 
 void Sdl2Ui::SetTitle(const std::string &title) {
 #ifdef EMSCRIPTEN
-    return;
+	return;
 #endif
 	SDL_SetWindowTitle(sdl_window, title.c_str());
 }
