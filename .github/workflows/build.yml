@@ -46,14 +46,14 @@ jobs:
           ref: "b3ed5f25c0aa9d3cfac39cec7d3e9e0614f68c7d"
           path: buildscripts
 
+      - name: Use gcc problem matcher
+        run: echo "::add-matcher::.github/gcc_comment_matcher.json"
+
       - name: Install Player dependencies
         run: ./0_build_everything.sh
         working-directory: buildscripts/emscripten
         env:
           BUILD_LIBLCF: "1"
-
-      - name: Use gcc problem matcher
-        run: echo "::add-matcher::.github/gcc_comment_matcher.json"
 
       - name: Configure
         run: |
