@@ -13,14 +13,9 @@ defaults:
     shell: bash
 
 jobs:
-  build:
-    name: Emscripten
+  setup:
+    name: Set up environment
     runs-on: ubuntu-26.04
-
-    strategy:
-      fail-fast: false
-      matrix:
-        preset: [yno-release, yno-simd-release]
 
     steps:
       - name: Install dependencies
@@ -55,6 +50,17 @@ jobs:
         env:
           BUILD_LIBLCF: "1"
 
+  build:
+    name: Emscripten
+    runs-on: ubuntu-26.04
+    needs: setup
+
+    strategy:
+      fail-fast: false
+      matrix:
+        preset: [yno-release, yno-simd-release]
+
+    steps:
       - name: Configure
         run: |
           VER="(GA, `date +%Y-%m-%d`)"
