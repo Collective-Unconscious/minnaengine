@@ -18,6 +18,66 @@ jobs:
     runs-on: ubuntu-26.04
 
     steps:
+      - name: Clone Repository
+        uses: actions/checkout@v7
+
+      - name: Clone buildscripts
+        uses: actions/checkout@v7
+        id: checkout-buildscripts
+        with:
+          repository: EasyRPG/buildscripts
+          ref: "b3ed5f25c0aa9d3cfac39cec7d3e9e0614f68c7d"
+          path: buildscripts
+
+      - name: Test
+        run: |
+          echo "${{ steps.checkout-buildscripts.outputs.commit }}"
+
+      - name: Check cache
+        uses: actions/cache@v6
+        id: cache
+        with:
+          path: |
+            buildscripts/emscripten/emsdk-portable
+            buildscripts/emscripten/bin
+            buildscripts/emscripten/lib
+            buildscripts/emscripten/include
+          lookup-only: true
+          key: engine-${{ steps.checkout-buildscripts.outputs.commit }}-${{ runner.os }}
+          restore-keys: |
+            easyrpg-emscripten-${{ steps.checkout-buildscripts.outputs.commit }}-
+            easyrpg-emscripten-
+
+      - name: Install dependencies
+        run: |
+          export DEBIAN_FRONTEND="noninteractive"
+          sudo apt-get update
+          sudo apt-get install -yqq --no-install-recommends --no-install-suggests \
+            ca-certificates build-essential cmake ninja-build meson git ccache
+        if: steps.cache.outputs.cache-hit != 'true'
+
+      - name: Use gcc problem matcher
+        run: echo "::add-matcher::.github/gcc_comment_matcher.json"
+        if: steps.cache.outputs.cache-hit != 'true'
+
+      - name: Install Player dependencies
+        run: ./0_build_everything.sh
+        working-directory: buildscripts/emscripten
+        env:
+          BUILD_LIBLCF: "1"
+        if: steps.cache.outputs.cache-hit != 'true'
+
+  build:
+    name: Emscripten
+    runs-on: ubuntu-26.04
+    needs: setup
+
+    strategy:
+      fail-fast: true
+      matrix:
+        preset: [yno-release, yno-simd-release]
+
+    steps:
       - name: Install dependencies
         run: |
           export DEBIAN_FRONTEND="noninteractive"
@@ -26,41 +86,30 @@ jobs:
             ca-certificates build-essential cmake ninja-build meson git ccache
 
       - name: Clone Repository
-        uses: actions/checkout@v4
-        if: github.event.inputs.git-ref == ''
-      - name: Clone Repository (with custom ref)
-        uses: actions/checkout@v4
-        if: github.event.inputs.git-ref != ''
-        with:
-          ref: ${{ github.event.inputs.git-ref }}
+        uses: actions/checkout@v7
 
       - name: Clone buildscripts
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
+        id: checkout-buildscripts
         with:
           repository: EasyRPG/buildscripts
           ref: "b3ed5f25c0aa9d3cfac39cec7d3e9e0614f68c7d"
           path: buildscripts
 
-      - name: Use gcc problem matcher
-        run: echo "::add-matcher::.github/gcc_comment_matcher.json"
+      - name: Check cache
+        uses: actions/cache@v6
+        id: cache
+        with:
+          path: |
+            buildscripts/emscripten/emsdk-portable
+            buildscripts/emscripten/bin
+            buildscripts/emscripten/lib
+            buildscripts/emscripten/include
+          key: engine-${{ steps.checkout-buildscripts.outputs.commit }}-${{ runner.os }}
+          restore-keys: |
+            easyrpg-emscripten-${{ steps.checkout-buildscripts.outputs.commit }}-
+            easyrpg-emscripten-
 
-      - name: Install Player dependencies
-        run: ./0_build_everything.sh
-        working-directory: buildscripts/emscripten
-        env:
-          BUILD_LIBLCF: "1"
-
-  build:
-    name: Emscripten
-    runs-on: ubuntu-26.04
-    needs: setup
-
-    strategy:
-      fail-fast: false
-      matrix:
-        preset: [yno-release, yno-simd-release]
-
-    steps:
       - name: Configure
         run: |
           VER="(GA, `date +%Y-%m-%d`)"
