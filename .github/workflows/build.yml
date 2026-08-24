@@ -1,0 +1,69 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    name: Emscripten
+    runs-on: ubuntu-26.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        preset: [yno-release, yno-simd-release]
+
+    steps:
+      - name: Install dependencies
+        run: |
+          export DEBIAN_FRONTEND="noninteractive"
+          apt-get update
+          apt-get install -yqq --no-install-recommends --no-install-suggests \
+            ca-certificates build-essential cmake ninja-build meson git ccache
+
+      - name: Clone Repository
+        uses: actions/checkout@v4
+        if: github.event.inputs.git-ref == ''
+      - name: Clone Repository (with custom ref)
+        uses: actions/checkout@v4
+        if: github.event.inputs.git-ref != ''
+        with:
+          ref: ${{ github.event.inputs.git-ref }}
+
+      - name: Clone buildscripts
+        uses: actions/checkout@v4
+        with:
+          repository: EasyRPG/buildscripts
+          ref: "b3ed5f25c0aa9d3cfac39cec7d3e9e0614f68c7d"
+          path: buildscripts
+
+      - name: Install Player dependencies
+        run: ./0_build_everything.sh
+        working-directory: buildscripts/emscripten
+        env:
+          BUILD_LIBLCF: "1"
+
+      - name: Use gcc problem matcher
+        run: echo "::add-matcher::.github/gcc_comment_matcher.json"
+
+      - name: Configure
+        run: |
+          VER="(GA, `date +%Y-%m-%d`)"
+          cmake --preset ${{ matrix.preset }} \
+            -DCMAKE_CXX_FLAGS="-Wall -Wextra -Wdeprecated -fsanitize=address,undefined" \
+            -DPLAYER_VERSION_APPEND="$VER"
+        env:
+          EASYRPG_BUILDSCRIPTS: "${{ github.workspace }}/buildscripts"
+
+      - name: Build
+        run: |
+          cmake --build --preset ${{ matrix.preset }}
